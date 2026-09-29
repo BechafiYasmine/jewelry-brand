@@ -1,99 +1,92 @@
 const products = [
   {
     id: 1,
-    name: 'Luna Necklace',
-    category: 'Necklaces',
-    price: 3500,
-    material: 'Stainless steel · Gold plated',
+    name: 'Celeste Ring',
+    category: 'Rings',
+    price: 3900,
+    material: 'Gold plated',
     description:
-      'A delicate necklace designed to add a subtle touch of elegance to your everyday look.',
+      'A sculptural gold ring with a timeless silhouette, designed for everyday elegance.',
     image:
-      'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?auto=format&fit=crop&w=900&q=85',
+      'https://images.unsplash.com/photo-1605100804763-247f67b3557e?auto=format&fit=crop&w=800&q=85',
+    colorOptions: [
+      { name: 'Gold', hex: '#c5a56b' },
+      { name: 'Silver', hex: '#c8c8c5' },
+      { name: 'Rose gold', hex: '#c98f7d' },
+    ],
     featured: true,
+    badge: 'New',
   },
   {
     id: 2,
-    name: 'Elara Earrings',
-    category: 'Earrings',
-    price: 2800,
+    name: 'Luna Necklace',
+    category: 'Necklaces',
+    price: 4500,
     material: 'Gold plated',
     description:
-      'Elegant earrings with a timeless silhouette, perfect for everyday moments and special occasions.',
+      'A delicate necklace designed to bring a subtle touch of beauty to your everyday moments.',
     image:
-      'https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?auto=format&fit=crop&w=900&q=85',
+      'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?auto=format&fit=crop&w=800&q=85',
+    colorOptions: [
+      { name: 'Gold', hex: '#c5a56b' },
+      { name: 'Silver', hex: '#c8c8c5' },
+      { name: 'Rose gold', hex: '#c98f7d' },
+    ],
     featured: true,
+    badge: 'New',
   },
   {
     id: 3,
-    name: 'Mila Bracelet',
-    category: 'Bracelets',
+    name: 'Éclat Earrings',
+    category: 'Earrings',
     price: 3200,
-    material: 'Stainless steel',
+    material: 'Gold plated',
     description:
-      'A refined bracelet created to complement your style with effortless simplicity.',
+      'Light-catching earrings with a refined finish, made to elevate both everyday and occasion looks.',
     image:
-      'https://images.unsplash.com/photo-1611652022419-a9419f74343d?auto=format&fit=crop&w=900&q=85',
+      'https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?auto=format&fit=crop&w=800&q=85',
+    colorOptions: [
+      { name: 'Gold', hex: '#c5a56b' },
+      { name: 'Silver', hex: '#c8c8c5' },
+      { name: 'Rose gold', hex: '#c98f7d' },
+    ],
     featured: true,
+    badge: 'New',
   },
   {
     id: 4,
-    name: 'Sienna Ring',
-    category: 'Rings',
-    price: 2400,
+    name: 'Aurelia Bracelet',
+    category: 'Bracelets',
+    price: 4100,
     material: 'Gold plated',
     description:
-      'A minimal statement ring with a delicate finish and sophisticated character.',
+      'A graceful bracelet with a polished gold finish and understated feminine detail.',
     image:
-      'https://images.unsplash.com/photo-1605100804763-247f67b3557e?auto=format&fit=crop&w=900&q=85',
+      'https://images.unsplash.com/photo-1573408301185-9146fe634ad0?auto=format&fit=crop&w=800&q=85',
+    colorOptions: [
+      { name: 'Gold', hex: '#c5a56b' },
+      { name: 'Silver', hex: '#c8c8c5' },
+      { name: 'Rose gold', hex: '#c98f7d' },
+    ],
     featured: true,
+    badge: 'New',
   },
   {
     id: 5,
-    name: 'Celeste Necklace',
-    category: 'Necklaces',
-    price: 3900,
-    material: '18K gold plated',
-    description:
-      'A graceful necklace inspired by celestial forms and timeless femininity.',
-    image:
-      'https://images.unsplash.com/photo-1599643477877-530eb83abc8e?auto=format&fit=crop&w=900&q=85',
-    featured: false,
-  },
-  {
-    id: 6,
-    name: 'Amara Ring',
-    category: 'Rings',
-    price: 2700,
-    material: 'Stainless steel · Gold plated',
-    description:
-      'A clean and elegant ring designed to be worn alone or layered with your favorites.',
-    image:
-      'https://images.unsplash.com/photo-1603561596112-db6a6c5a9f7e?auto=format&fit=crop&w=900&q=85',
-    featured: false,
-  },
-  {
-    id: 7,
-    name: 'Iris Bracelet',
-    category: 'Bracelets',
-    price: 3100,
+    name: 'Amour Set',
+    category: 'Sets',
+    price: 6900,
     material: 'Gold plated',
     description:
-      'A refined bracelet with a delicate chain and a polished finish.',
+      'A coordinated jewelry set that makes gifting and getting ready feel effortless.',
     image:
-      'https://images.unsplash.com/photo-1573408301185-9146fe634ad0?auto=format&fit=crop&w=900&q=85',
+      'https://images.unsplash.com/photo-1611652022419-a9419f74343d?auto=format&fit=crop&w=800&q=85',
+    colorOptions: [
+      { name: 'Gold', hex: '#c5a56b' },
+      { name: 'Silver', hex: '#c8c8c5' },
+    ],
     featured: false,
-  },
-  {
-    id: 8,
-    name: 'Noa Earrings',
-    category: 'Earrings',
-    price: 2900,
-    material: 'Stainless steel',
-    description:
-      'Minimal earrings designed to bring a soft, elegant finish to any outfit.',
-    image:
-      'https://images.unsplash.com/photo-1635767798638-3e25273a8236?auto=format&fit=crop&w=900&q=85',
-    featured: false,
+    badge: 'Bestseller',
   },
 ]
 

@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react'
 import { Link, NavLink } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
+import { useCart } from '../context/CartContext'
 
 function Navbar() {
+  const { cartCount, setIsCartOpen } = useCart()
   const [menuOpen, setMenuOpen] = useState(false)
   const [scrolled, setScrolled] = useState(false)
 
@@ -60,9 +62,16 @@ function Navbar() {
             ♡
           </Link>
 
-          <Link to="/shop" className="nav-bag" aria-label="Shopping bag">
-            Bag
-          </Link>
+          <button
+            type="button"
+            className="nav-bag"
+            aria-label={`Open shopping bag${cartCount ? `, ${cartCount} items` : ''}`}
+            onClick={() => setIsCartOpen(true)}
+          >
+            <span className="bag-emoji" aria-hidden="true">🛍️</span>
+            <span>Bag</span>
+            {cartCount > 0 && <span className="bag-count">{cartCount}</span>}
+          </button>
         </div>
 
         <button

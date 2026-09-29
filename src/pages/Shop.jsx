@@ -10,7 +10,7 @@ function Shop() {
 
   const [category, setCategory] = useState(initialCategory)
 
-  const categories = ['All', 'Necklaces', 'Rings', 'Earrings', 'Bracelets']
+  const categories = ['All', 'Necklaces', 'Rings', 'Earrings', 'Bracelets', 'Sets']
 
   const filteredProducts =
     category === 'All'
