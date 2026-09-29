@@ -7,6 +7,32 @@ import CategoryCard from '../components/CategoryCard'
 import ProductCard from '../components/ProductCard'
 
 function Home() {
+  const newArrivals = products.slice(0, 4)
+  const bestSellers = products.slice(1, 5)
+
+  const categories = [
+    {
+      name: 'Rings',
+      image: 'https://images.unsplash.com/photo-1605100804763-247f67b3557e?auto=format&fit=crop&w=900&q=85',
+    },
+    {
+      name: 'Earrings',
+      image: 'https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?auto=format&fit=crop&w=900&q=85',
+    },
+    {
+      name: 'Necklaces',
+      image: 'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?auto=format&fit=crop&w=900&q=85',
+    },
+    {
+      name: 'Bracelets',
+      image: 'https://images.unsplash.com/photo-1573408301185-9146fe634ad0?auto=format&fit=crop&w=900&q=85',
+    },
+    {
+      name: 'Sets',
+      image: 'https://images.unsplash.com/photo-1611652022419-a9419f74343d?auto=format&fit=crop&w=900&q=85',
+    },
+  ]
+
   const titleContainer = {
     hidden: {},
     visible: {
@@ -149,6 +175,27 @@ function Home() {
         <div className="hero-number">01 — 04</div>
       </section>
 
+      <section className="brand-marquee" aria-label="Lunéa brand values">
+        <div className="brand-marquee-track">
+          <div className="brand-marquee-copy">
+            <span>MADE TO BE TREASURED</span>
+            <i aria-hidden="true">✦</i>
+            <span>EVERYDAY ELEGANCE</span>
+            <i aria-hidden="true">✦</i>
+            <span>DESIGNED WITH INTENTION</span>
+            <i aria-hidden="true">✦</i>
+          </div>
+          <div className="brand-marquee-copy" aria-hidden="true">
+            <span>MADE TO BE TREASURED</span>
+            <i>✦</i>
+            <span>EVERYDAY ELEGANCE</span>
+            <i>✦</i>
+            <span>DESIGNED WITH INTENTION</span>
+            <i>✦</i>
+          </div>
+        </div>
+      </section>
+
       <section className="categories-section">
         <div className="section-heading">
           <span className="section-eyebrow">EXPLORE LUNÉA</span>
@@ -159,27 +206,33 @@ function Home() {
           </p>
         </div>
 
-        <div className="categories-grid">
-          <CategoryCard
-            name="Rings"
-            image="https://images.unsplash.com/photo-1605100804763-247f67b3557e?auto=format&fit=crop&w=900&q=85"
-          />
-          <CategoryCard
-            name="Earrings"
-            image="https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?auto=format&fit=crop&w=900&q=85"
-          />
-          <CategoryCard
-            name="Necklaces"
-            image="https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?auto=format&fit=crop&w=900&q=85"
-          />
-          <CategoryCard
-            name="Bracelets"
-            image="https://images.unsplash.com/photo-1573408301185-9146fe634ad0?auto=format&fit=crop&w=900&q=85"
-          />
-          <CategoryCard
-            name="Sets"
-            image="https://images.unsplash.com/photo-1611652022419-a9419f74343d?auto=format&fit=crop&w=900&q=85"
-          />
+        <div
+          className="categories-grid"
+          role="region"
+          aria-label="Browse jewelry categories"
+          tabIndex={0}
+        >
+          <div className="image-marquee-track category-marquee-track">
+            {[0, 1, 2].map((copyIndex) => {
+              const isClone = copyIndex > 0
+
+              return (
+                <div
+                  className="image-marquee-group category-marquee-group"
+                  key={`categories-${copyIndex}`}
+                  aria-hidden={isClone || undefined}
+                >
+                  {categories.map((category) => (
+                    <CategoryCard
+                      key={`${isClone ? 'clone-' : ''}${category.name}`}
+                      {...category}
+                      isClone={isClone}
+                    />
+                  ))}
+                </div>
+              )
+            })}
+          </div>
         </div>
       </section>
 
@@ -194,10 +247,33 @@ function Home() {
           </Link>
         </div>
 
-        <div className="product-grid editorial-product-grid">
-          {products.slice(0, 4).map((product) => (
-            <ProductCard key={product.id} product={product} />
-          ))}
+        <div
+          className="product-grid editorial-product-grid"
+          role="region"
+          aria-label="New arrivals"
+          tabIndex={0}
+        >
+          <div className="image-marquee-track product-marquee-track">
+            {[0, 1, 2].map((copyIndex) => {
+              const isClone = copyIndex > 0
+
+              return (
+                <div
+                  className="image-marquee-group product-marquee-group"
+                  key={`arrivals-${copyIndex}`}
+                  aria-hidden={isClone || undefined}
+                >
+                  {newArrivals.map((product) => (
+                    <ProductCard
+                      key={`${isClone ? 'clone-' : ''}${product.id}`}
+                      product={product}
+                      isClone={isClone}
+                    />
+                  ))}
+                </div>
+              )
+            })}
+          </div>
         </div>
       </section>
 
@@ -239,13 +315,33 @@ function Home() {
           </Link>
         </div>
 
-        <div className="product-grid editorial-product-grid">
-          {products.slice(1, 5).map((product) => (
-            <ProductCard
-              key={product.id}
-              product={{ ...product, badge: 'Bestseller' }}
-            />
-          ))}
+        <div
+          className="product-grid editorial-product-grid"
+          role="region"
+          aria-label="Best sellers"
+          tabIndex={0}
+        >
+          <div className="image-marquee-track product-marquee-track">
+            {[0, 1, 2].map((copyIndex) => {
+              const isClone = copyIndex > 0
+
+              return (
+                <div
+                  className="image-marquee-group product-marquee-group"
+                  key={`bestsellers-${copyIndex}`}
+                  aria-hidden={isClone || undefined}
+                >
+                  {bestSellers.map((product) => (
+                    <ProductCard
+                      key={`${isClone ? 'clone-' : ''}${product.id}`}
+                      product={{ ...product, badge: 'Bestseller' }}
+                      isClone={isClone}
+                    />
+                  ))}
+                </div>
+              )
+            })}
+          </div>
         </div>
       </section>
 
