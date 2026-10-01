@@ -10,6 +10,7 @@ function AdminSidebar() {
 			<span className="admin-app-nav-label">WORKSPACE</span>
 			<nav className="admin-app-nav" aria-label="Admin navigation">
 				<NavLink end to="/admin"><span aria-hidden="true">◫</span> Overview</NavLink>
+				<NavLink to="/admin/orders"><span aria-hidden="true">▤</span> Orders</NavLink>
 				<NavLink to="/admin/products"><span aria-hidden="true">◇</span> Products</NavLink>
 			</nav>
 			<div className="admin-app-sidebar-note">

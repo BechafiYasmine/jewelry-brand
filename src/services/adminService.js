@@ -67,6 +67,32 @@ export function deactivateAdminProduct(id) {
 	return request(`/products/${encodeURIComponent(id)}`, { method: 'DELETE' })
 }
 
+export function getAdminDashboardStats() {
+	return request('/dashboard/stats')
+}
+
+export function getAdminOrders(filters = {}) {
+	const params = new URLSearchParams()
+	if (filters.search?.trim()) params.set('search', filters.search.trim())
+	if (filters.status && filters.status !== 'ALL') params.set('status', filters.status)
+	if (filters.take) params.set('take', String(filters.take))
+	const query = params.toString()
+	return request(`/orders${query ? `?${query}` : ''}`)
+}
+
+export async function getAdminOrder(id) {
+	const data = await request(`/orders/${encodeURIComponent(id)}`)
+	return data.order
+}
+
+export async function setAdminOrderStatus(id, status) {
+	const data = await request(`/orders/${encodeURIComponent(id)}/status`, {
+		method: 'PATCH',
+		body: JSON.stringify({ status }),
+	})
+	return data.order
+}
+
 export async function uploadProductImage(file, onProgress = () => {}) {
 	if (!ACCEPTED_IMAGE_TYPES.includes(file.type)) {
 		throw new Error('Choose a JPG, PNG, or WebP image.')

@@ -4,6 +4,7 @@ function AdminHeader() {
 	const location = useLocation()
 	const navigate = useNavigate()
 	const isProducts = location.pathname.startsWith('/admin/products')
+	const isOrders = location.pathname.startsWith('/admin/orders')
 
 	function logout() {
 		window.localStorage.removeItem('adminToken')
@@ -14,7 +15,7 @@ function AdminHeader() {
 		<header className="admin-app-header">
 			<div>
 				<span className="admin-app-eyebrow">LUNÉA ATELIER · ADMIN</span>
-				<h1>{isProducts ? 'Product catalog' : 'Order management'}</h1>
+				<h1>{isProducts ? 'Product catalog' : isOrders ? 'Orders' : 'Store overview'}</h1>
 			</div>
 			<div className="admin-app-header-actions">
 				<Link to="/" className="admin-app-store-link">View storefront ↗</Link>

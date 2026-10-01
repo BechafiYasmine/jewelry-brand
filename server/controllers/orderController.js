@@ -4,10 +4,21 @@ import { prisma } from "../lib/prisma.js";
 const ORDER_STATUSES = [
 	"PENDING",
 	"CONFIRMED",
+	"PREPARING",
 	"SHIPPED",
 	"DELIVERED",
 	"CANCELLED",
 ];
+
+const ORDER_ITEMS_INCLUDE = {
+	items: {
+		include: {
+			product: {
+				select: { id: true, name: true, imageUrl: true, category: true },
+			},
+		},
+	},
+};
 
 // Public: customers submit an order. Prices are always read from the database.
 export async function createOrder(req, res) {
@@ -140,19 +151,64 @@ export async function createOrder(req, res) {
 }
 
 // Private: authenticated admins retrieve orders.
-export async function getAdminOrders(_req, res) {
+export async function getAdminDashboardStats(_req, res) {
 	try {
-		const orders = await prisma.order.findMany({
-			orderBy: { createdAt: "desc" },
-			include: {
-				items: {
-					include: {
-						product: {
-							select: { id: true, name: true, imageUrl: true, category: true },
-						},
-					},
-				},
+		const [totalOrders, pendingOrders, confirmedOrders, revenueResult] = await Promise.all([
+			prisma.order.count(),
+			prisma.order.count({ where: { status: "PENDING" } }),
+			prisma.order.count({ where: { status: "CONFIRMED" } }),
+			prisma.order.aggregate({
+				where: { status: { not: "CANCELLED" } },
+				_sum: { total: true },
+			}),
+		]);
+
+		return res.json({
+			success: true,
+			stats: {
+				totalOrders,
+				pendingOrders,
+				confirmedOrders,
+				revenue: revenueResult._sum.total ?? 0,
 			},
+		});
+	} catch (error) {
+		console.error("Fetch dashboard stats failed:", error);
+		return res.status(500).json({ success: false, message: "Unable to retrieve dashboard statistics." });
+	}
+}
+
+export async function getAdminOrders(req, res) {
+	try {
+		const search = typeof req.query.search === "string" ? req.query.search.trim().slice(0, 100) : "";
+		const status = typeof req.query.status === "string" ? req.query.status.trim().toUpperCase() : "ALL";
+		const takeValue = Number(req.query.take);
+		const where = {};
+
+		if (status !== "ALL") {
+			if (!ORDER_STATUSES.includes(status)) {
+				return res.status(400).json({ success: false, message: "Invalid order status filter." });
+			}
+			where.status = status === "PREPARING"
+				? { in: ["PREPARING", "PROCESSING"] }
+				: status;
+		}
+
+		if (search) {
+			const numericId = Number(search.replace(/^#/, ""));
+			where.OR = [
+				{ customerName: { contains: search } },
+				{ phone: { contains: search } },
+				{ orderNumber: { contains: search.replace(/^#/, "") } },
+				...(Number.isSafeInteger(numericId) && numericId > 0 ? [{ id: numericId }] : []),
+			];
+		}
+
+		const orders = await prisma.order.findMany({
+			where,
+			orderBy: { createdAt: "desc" },
+			...(Number.isSafeInteger(takeValue) && takeValue > 0 ? { take: Math.min(takeValue, 100) } : {}),
+			include: ORDER_ITEMS_INCLUDE,
 		});
 
 		return res.json({ success: true, count: orders.length, orders });
@@ -162,6 +218,25 @@ export async function getAdminOrders(_req, res) {
 			success: false,
 			message: "Unable to retrieve orders.",
 		});
+	}
+}
+
+export async function getAdminOrderById(req, res) {
+	const id = Number(req.params.id);
+	if (!Number.isSafeInteger(id) || id < 1) {
+		return res.status(400).json({ success: false, message: "Invalid order ID." });
+	}
+
+	try {
+		const order = await prisma.order.findUnique({
+			where: { id },
+			include: ORDER_ITEMS_INCLUDE,
+		});
+		if (!order) return res.status(404).json({ success: false, message: "Order not found." });
+		return res.json({ success: true, order });
+	} catch (error) {
+		console.error("Fetch order details failed:", error);
+		return res.status(500).json({ success: false, message: "Unable to retrieve order details." });
 	}
 }
 
@@ -179,7 +254,11 @@ export async function updateOrderStatus(req, res) {
 			return res.status(400).json({ success: false, message: "Invalid order status." });
 		}
 
-		const order = await prisma.order.update({ where: { id }, data: { status } });
+		const order = await prisma.order.update({
+			where: { id },
+			data: { status },
+			include: ORDER_ITEMS_INCLUDE,
+		});
 		return res.json({ success: true, order });
 	} catch (error) {
 		if (error.code === "P2025") {

@@ -15,6 +15,7 @@ import AdminDashboard from './pages/AdminDashboard'
 import AdminLayout from './admin/AdminLayout'
 import AdminProducts from './admin/pages/Products'
 import AdminProductForm from './admin/pages/ProductForm'
+import AdminOrders from './admin/pages/Orders'
 
 function AppRoutes() {
   const { pathname } = useLocation()
@@ -34,6 +35,7 @@ function AppRoutes() {
         <Route path="/admin/login" element={<AdminLogin />} />
         <Route path="/admin" element={<AdminLayout />}>
           <Route index element={<AdminDashboard />} />
+          <Route path="orders" element={<AdminOrders />} />
           <Route path="products" element={<AdminProducts />} />
           <Route path="products/new" element={<AdminProductForm />} />
           <Route path="products/:id/edit" element={<AdminProductForm />} />
