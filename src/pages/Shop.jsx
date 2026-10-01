@@ -1,16 +1,51 @@
 import { useSearchParams } from 'react-router-dom'
-import { useState } from 'react'
-import products from '../data/products'
+import { useEffect, useState } from 'react'
 import ProductCard from '../components/ProductCard'
+import { getProducts } from '../services/productService'
 
 function Shop() {
   const [searchParams] = useSearchParams()
+  const [products, setProducts] = useState([])
+  const [category, setCategory] = useState(searchParams.get('category') || 'All')
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
 
-  const initialCategory = searchParams.get('category') || 'All'
+  useEffect(() => {
+    setCategory(searchParams.get('category') || 'All')
+  }, [searchParams])
 
-  const [category, setCategory] = useState(initialCategory)
+  useEffect(() => {
+    let isMounted = true
+
+    async function loadProducts() {
+      try {
+        setLoading(true)
+        setError('')
+        const data = await getProducts()
+
+        if (isMounted) {
+          setProducts(data)
+        }
+      } catch (err) {
+        if (isMounted) {
+          setError('Unable to load products right now. Please try again later.')
+        }
+      } finally {
+        if (isMounted) {
+          setLoading(false)
+        }
+      }
+    }
+
+    loadProducts()
+
+    return () => {
+      isMounted = false
+    }
+  }, [])
 
   const categories = ['All', 'Necklaces', 'Rings', 'Earrings', 'Bracelets', 'Sets']
+  const showShopError = !loading && products.length === 0 && Boolean(error)
 
   const filteredProducts =
     category === 'All'
@@ -42,13 +77,27 @@ function Shop() {
           ))}
         </div>
 
-        <div className="shop-count">{filteredProducts.length} pieces</div>
+        {showShopError ? (
+          <p className="empty-state">{error}</p>
+        ) : (
+          <>
+            <div className="shop-count">
+              {loading ? 'Loading pieces...' : `${filteredProducts.length} pieces`}
+            </div>
 
-        <div className="product-grid shop-grid">
-          {filteredProducts.map((product) => (
-            <ProductCard key={product.id} product={product} />
-          ))}
-        </div>
+            {loading ? (
+              <p className="empty-state">Loading collection...</p>
+            ) : filteredProducts.length === 0 ? (
+              <p className="empty-state">No pieces available in this category right now.</p>
+            ) : (
+              <div className="product-grid shop-grid">
+                {filteredProducts.map((product) => (
+                  <ProductCard key={product.id} product={product} />
+                ))}
+              </div>
+            )}
+          </>
+        )}
       </section>
     </main>
   )

@@ -1,14 +1,50 @@
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import heroImage from '../assets/lunea-hero.png'
 
-import products from '../data/products'
 import CategoryCard from '../components/CategoryCard'
 import ProductCard from '../components/ProductCard'
+import { getProducts } from '../services/productService'
 
 function Home() {
+  const [products, setProducts] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
+
+  useEffect(() => {
+    let isMounted = true
+
+    async function loadProducts() {
+      try {
+        setLoading(true)
+        setError('')
+        const data = await getProducts()
+
+        if (isMounted) {
+          setProducts(data)
+        }
+      } catch (err) {
+        if (isMounted) {
+          setError('Unable to load products right now. Please try again later.')
+        }
+      } finally {
+        if (isMounted) {
+          setLoading(false)
+        }
+      }
+    }
+
+    loadProducts()
+
+    return () => {
+      isMounted = false
+    }
+  }, [])
+
   const newArrivals = products.slice(0, 4)
   const bestSellers = products.slice(1, 5)
+  const showProductError = !loading && products.length === 0 && Boolean(error)
 
   const categories = [
     {
@@ -247,34 +283,44 @@ function Home() {
           </Link>
         </div>
 
-        <div
-          className="product-grid editorial-product-grid"
-          role="region"
-          aria-label="New arrivals"
-          tabIndex={0}
-        >
-          <div className="image-marquee-track product-marquee-track">
-            {[0, 1, 2].map((copyIndex) => {
-              const isClone = copyIndex > 0
+        {showProductError ? (
+          <p className="empty-state">{error}</p>
+        ) : (
+          <div
+            className="product-grid editorial-product-grid"
+            role="region"
+            aria-label="New arrivals"
+            tabIndex={0}
+          >
+            {loading ? (
+              <p className="empty-state">Loading new arrivals...</p>
+            ) : newArrivals.length === 0 ? (
+              <p className="empty-state">No new arrivals available right now.</p>
+            ) : (
+              <div className="image-marquee-track product-marquee-track">
+                {[0, 1, 2].map((copyIndex) => {
+                  const isClone = copyIndex > 0
 
-              return (
-                <div
-                  className="image-marquee-group product-marquee-group"
-                  key={`arrivals-${copyIndex}`}
-                  aria-hidden={isClone || undefined}
-                >
-                  {newArrivals.map((product) => (
-                    <ProductCard
-                      key={`${isClone ? 'clone-' : ''}${product.id}`}
-                      product={product}
-                      isClone={isClone}
-                    />
-                  ))}
-                </div>
-              )
-            })}
+                  return (
+                    <div
+                      className="image-marquee-group product-marquee-group"
+                      key={`arrivals-${copyIndex}`}
+                      aria-hidden={isClone || undefined}
+                    >
+                      {newArrivals.map((product) => (
+                        <ProductCard
+                          key={`${isClone ? 'clone-' : ''}${product.id}`}
+                          product={product}
+                          isClone={isClone}
+                        />
+                      ))}
+                    </div>
+                  )
+                })}
+              </div>
+            )}
           </div>
-        </div>
+        )}
       </section>
 
       <section className="collections-section">
@@ -315,34 +361,44 @@ function Home() {
           </Link>
         </div>
 
-        <div
-          className="product-grid editorial-product-grid"
-          role="region"
-          aria-label="Best sellers"
-          tabIndex={0}
-        >
-          <div className="image-marquee-track product-marquee-track">
-            {[0, 1, 2].map((copyIndex) => {
-              const isClone = copyIndex > 0
+        {showProductError ? (
+          <p className="empty-state">{error}</p>
+        ) : (
+          <div
+            className="product-grid editorial-product-grid"
+            role="region"
+            aria-label="Best sellers"
+            tabIndex={0}
+          >
+            {loading ? (
+              <p className="empty-state">Loading best sellers...</p>
+            ) : bestSellers.length === 0 ? (
+              <p className="empty-state">No featured pieces are available right now.</p>
+            ) : (
+              <div className="image-marquee-track product-marquee-track">
+                {[0, 1, 2].map((copyIndex) => {
+                  const isClone = copyIndex > 0
 
-              return (
-                <div
-                  className="image-marquee-group product-marquee-group"
-                  key={`bestsellers-${copyIndex}`}
-                  aria-hidden={isClone || undefined}
-                >
-                  {bestSellers.map((product) => (
-                    <ProductCard
-                      key={`${isClone ? 'clone-' : ''}${product.id}`}
-                      product={{ ...product, badge: 'Bestseller' }}
-                      isClone={isClone}
-                    />
-                  ))}
-                </div>
-              )
-            })}
+                  return (
+                    <div
+                      className="image-marquee-group product-marquee-group"
+                      key={`bestsellers-${copyIndex}`}
+                      aria-hidden={isClone || undefined}
+                    >
+                      {bestSellers.map((product) => (
+                        <ProductCard
+                          key={`${isClone ? 'clone-' : ''}${product.id}`}
+                          product={{ ...product, badge: 'Bestseller' }}
+                          isClone={isClone}
+                        />
+                      ))}
+                    </div>
+                  )
+                })}
+              </div>
+            )}
           </div>
-        </div>
+        )}
       </section>
 
       <section className="promotion-section">

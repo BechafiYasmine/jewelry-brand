@@ -1,15 +1,46 @@
 import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
-import products from '../data/products'
 import { useCart } from '../context/CartContext'
+import { getProductById } from '../services/productService'
 
 function Product() {
   const { addToCart } = useCart()
   const { id } = useParams()
+  const [product, setProduct] = useState(null)
   const [selectedColor, setSelectedColor] = useState('Gold')
   const [quantity, setQuantity] = useState(1)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
 
-  const product = products.find((item) => item.id === Number(id))
+  useEffect(() => {
+    let isMounted = true
+
+    async function loadProduct() {
+      try {
+        setLoading(true)
+        setError('')
+        const data = await getProductById(id)
+
+        if (isMounted) {
+          setProduct(data)
+        }
+      } catch (err) {
+        if (isMounted) {
+          setError('Unable to load this product right now.')
+        }
+      } finally {
+        if (isMounted) {
+          setLoading(false)
+        }
+      }
+    }
+
+    loadProduct()
+
+    return () => {
+      isMounted = false
+    }
+  }, [id])
 
   useEffect(() => {
     if (product) {
@@ -18,7 +49,15 @@ function Product() {
     }
   }, [product])
 
-  if (!product) {
+  if (loading) {
+    return (
+      <main className="not-found">
+        <h1>Loading piece...</h1>
+      </main>
+    )
+  }
+
+  if (error || !product) {
     return (
       <main className="not-found">
         <h1>Piece not found</h1>
@@ -43,7 +82,7 @@ function Product() {
     <main className="product-page">
       <div className="product-detail">
         <div className="product-detail-image">
-          <img src={product.image} alt={product.name} />
+          <img src={product.image || product.imageUrl} alt={product.name} />
         </div>
 
         <div className="product-detail-info">
