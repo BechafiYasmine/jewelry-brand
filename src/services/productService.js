@@ -1,55 +1,69 @@
 const API_BASE_URL = `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api`
 
 function normalizeProduct(product) {
-  return {
-    ...product,
-    id: Number(product.id),
-    image: product.imageUrl || product.image || '',
-    badge: product.badge || 'New',
-    material: product.material || 'Gold plated',
-    colorOptions:
-      product.colorOptions || [
-        { name: 'Gold', hex: '#c5a56b' },
-        { name: 'Silver', hex: '#c8c8c5' },
-        { name: 'Rose gold', hex: '#c98f7d' },
-      ],
-  }
+	return {
+		...product,
+		id: Number(product.id),
+		image: product.imageUrl || product.image || '',
+		imageScale: product.imageScale ?? 100,
+		imagePositionX: product.imagePositionX ?? 50,
+		imagePositionY: product.imagePositionY ?? 50,
+		badge: product.badge || 'New',
+		material: product.material || 'Gold plated',
+		colorOptions:
+			product.colorOptions || [
+				{ name: 'Gold', hex: '#c5a56b' },
+				{ name: 'Silver', hex: '#c8c8c5' },
+				{ name: 'Rose gold', hex: '#c98f7d' },
+			],
+	}
+}
+
+export function getProductImageStyle(product) {
+	const scale = Number(product.imageScale ?? 100) / 100
+	const positionX = Number(product.imagePositionX ?? 50)
+	const positionY = Number(product.imagePositionY ?? 50)
+
+	return {
+		objectPosition: `${100 - positionX}% ${100 - positionY}%`,
+		'--product-image-scale': String(scale),
+	}
 }
 
 async function fetchJson(url, options = {}) {
-  const response = await fetch(url, options)
+	const response = await fetch(url, options)
 
-  if (!response.ok) {
-    const errorText = await response.text()
-    throw new Error(errorText || `Request failed with status ${response.status}`)
-  }
+	if (!response.ok) {
+		const errorText = await response.text()
+		throw new Error(errorText || `Request failed with status ${response.status}`)
+	}
 
-  return response.json()
+	return response.json()
 }
 
 export async function getProducts() {
-  const data = await fetchJson(`${API_BASE_URL}/products`)
-  const rawProducts = Array.isArray(data?.products)
-    ? data.products
-    : Array.isArray(data)
-      ? data
-      : []
+	const data = await fetchJson(`${API_BASE_URL}/products`)
+	const rawProducts = Array.isArray(data?.products)
+		? data.products
+		: Array.isArray(data)
+			? data
+			: []
 
-  return rawProducts.map(normalizeProduct)
+	return rawProducts.map(normalizeProduct)
 }
 
 export async function getProductById(id) {
-  const response = await fetch(`${API_BASE_URL}/products/${id}`)
+	const response = await fetch(`${API_BASE_URL}/products/${id}`)
 
-  if (response.status === 404) {
-    return null
-  }
+	if (response.status === 404) {
+		return null
+	}
 
-  if (!response.ok) {
-    const errorText = await response.text()
-    throw new Error(errorText || `Request failed with status ${response.status}`)
-  }
+	if (!response.ok) {
+		const errorText = await response.text()
+		throw new Error(errorText || `Request failed with status ${response.status}`)
+	}
 
-  const data = await response.json()
-  return normalizeProduct(data.product || data)
+	const data = await response.json()
+	return normalizeProduct(data.product || data)
 }

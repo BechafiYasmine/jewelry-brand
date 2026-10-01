@@ -931,8 +931,10 @@
 }
 
 .admin-product-identity img {
+	flex: 0 0 48px;
 	width: 48px;
 	height: 52px;
+	max-width: 48px;
 	border-radius: 3px;
 	background: #f2eee8;
 	object-fit: cover;
@@ -1182,8 +1184,10 @@
 }
 
 .admin-image-preview {
+	position: relative;
 	display: grid;
-	min-height: 220px;
+	width: 100%;
+	aspect-ratio: 1 / 1;
 	overflow: hidden;
 	place-items: center;
 	border: 1px dashed #ddd3c7;
@@ -1191,6 +1195,20 @@
 	background: #f7f3ee;
 	color: #998c7e;
 	text-align: center;
+	touch-action: none;
+}
+
+.admin-image-preview.can-pan {
+	cursor: grab;
+}
+
+.admin-image-preview.has-image:focus-visible {
+	outline: 2px solid #a8895c;
+	outline-offset: 3px;
+}
+
+.admin-image-preview.is-dragging {
+	cursor: grabbing;
 }
 
 .admin-image-preview > div span {
@@ -1203,9 +1221,110 @@
 }
 
 .admin-image-preview img {
-	width: 100%;
-	height: 260px;
+	position: absolute;
+	top: 50%;
+	left: 50%;
 	object-fit: cover;
+	transform: translate3d(calc(-50% + var(--admin-image-pan-x, 0px)), calc(-50% + var(--admin-image-pan-y, 0px)), 0) scale(var(--admin-image-scale, 1));
+	transform-origin: center;
+	pointer-events: none;
+	user-select: none;
+	-webkit-user-select: none;
+	-webkit-user-drag: none;
+}
+
+.admin-image-preview.is-dragging img {
+	transition: none;
+}
+
+.admin-image-adjustments {
+	display: grid;
+	gap: 11px;
+	border-top: 1px solid #f0ebe5;
+	padding-top: 12px;
+}
+
+.admin-image-control {
+	display: grid;
+	gap: 5px;
+	color: #756b61;
+	font-size: 8px;
+}
+
+.admin-image-control-heading {
+	display: flex;
+	justify-content: space-between;
+	gap: 8px;
+}
+
+.admin-image-control-heading strong {
+	color: #4c443d;
+	font-weight: 600;
+}
+
+.admin-image-zoom-control {
+	display: grid;
+	grid-template-columns: 27px minmax(0, 1fr) 27px;
+	align-items: center;
+	gap: 8px;
+}
+
+.admin-image-zoom-control button {
+	width: 27px;
+	height: 27px;
+	border: 1px solid #ded6cc;
+	border-radius: 3px;
+	background: #fff;
+	color: #51463b;
+	font: inherit;
+	font-size: 14px;
+	cursor: pointer;
+}
+
+.admin-image-zoom-control button:disabled {
+	cursor: not-allowed;
+	opacity: 0.45;
+}
+
+.admin-image-pan-hint {
+	color: #887d72;
+	font-size: 8px;
+	line-height: 1.5;
+}
+
+.admin-image-adjustments input[type='range'] {
+	width: 100%;
+	accent-color: #8a704d;
+	cursor: pointer;
+}
+
+.admin-image-adjustments input[type='range']:disabled {
+	cursor: not-allowed;
+	opacity: 0.45;
+}
+
+.admin-image-range-ends {
+	display: flex;
+	justify-content: space-between;
+	color: #9b9085;
+	font-size: 7px;
+}
+
+.admin-image-adjustments button {
+	justify-self: start;
+	border: 0;
+	padding: 3px 0;
+	background: transparent;
+	color: #705b40;
+	font: inherit;
+	font-size: 8px;
+	text-decoration: underline;
+	cursor: pointer;
+}
+
+.admin-image-adjustments button:disabled {
+	cursor: not-allowed;
+	opacity: 0.45;
 }
 
 .admin-upload-button {
@@ -1342,7 +1461,7 @@
 	}
 
 	.admin-image-preview {
-		min-height: 200px;
+		max-width: 360px;
 	}
 
 	.admin-product-form-fields {

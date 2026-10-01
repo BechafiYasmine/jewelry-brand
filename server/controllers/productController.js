@@ -50,6 +50,22 @@ function validateProductInput(input, { partial = false } = {}) {
     } else data.imageUrl = input.imageUrl.trim();
   }
 
+  for (const [key, label] of [["imageScale", "Image zoom"], ["imagePositionX", "Horizontal image position"], ["imagePositionY", "Vertical image position"]]) {
+    if (has(key)) {
+      const value = input[key];
+      const validInteger = Number.isSafeInteger(value);
+      const min = key === "imageScale" ? 100 : 0;
+      const max = key === "imageScale" ? 250 : 100;
+      if (!validInteger || value < min || value > max) {
+        errors.push(`${label} must be a whole number from ${min} to ${max}.`);
+      } else {
+        data[key] = value;
+      }
+    } else if (!partial) {
+      data[key] = key === "imageScale" ? 100 : 50;
+    }
+  }
+
   if (has("badge")) {
     if (input.badge != null && typeof input.badge !== "string") errors.push("Badge must be text.");
     else data.badge = input.badge?.trim().slice(0, 60) || null;

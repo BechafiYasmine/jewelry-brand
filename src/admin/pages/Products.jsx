@@ -122,7 +122,7 @@ function Products() {
 								<tr key={product.id}>
 									<td>
 										<div className="admin-product-identity">
-											<img src={product.imageUrl} alt="" />
+										<img src={product.imageUrl} alt="" />
 											<div><strong>{product.name}</strong><small>/{product.slug}</small></div>
 										</div>
 									</td>

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { useCart } from '../context/CartContext'
 import { getProductById } from '../services/productService'
+import ProductImage from '../components/ProductImage'
 
 function Product() {
   const { addToCart } = useCart()
@@ -82,7 +83,7 @@ function Product() {
     <main className="product-page">
       <div className="product-detail">
         <div className="product-detail-image">
-          <img src={product.image || product.imageUrl} alt={product.name} />
+          <ProductImage product={product} />
         </div>
 
         <div className="product-detail-info">

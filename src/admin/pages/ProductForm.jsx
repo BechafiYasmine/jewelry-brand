@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import {
 	createAdminProduct,
@@ -6,6 +6,7 @@ import {
 	updateAdminProduct,
 	uploadProductImage,
 } from '../../services/adminService'
+import { getProductImageStyle } from '../../services/productService'
 
 const CATEGORIES = ['Necklaces', 'Rings', 'Earrings', 'Bracelets', 'Sets']
 const EMPTY_FORM = {
@@ -17,6 +18,9 @@ const EMPTY_FORM = {
 	stock: '',
 	badge: '',
 	imageUrl: '',
+	imageScale: 100,
+	imagePositionX: 50,
+	imagePositionY: 50,
 	isActive: true,
 }
 
@@ -39,8 +43,33 @@ function ProductForm() {
 	const [loading, setLoading] = useState(isEditing)
 	const [saving, setSaving] = useState(false)
 	const [uploading, setUploading] = useState(false)
+	const [isDraggingImage, setIsDraggingImage] = useState(false)
+	const [cropFrameSize, setCropFrameSize] = useState({ width: 0, height: 0 })
+	const [imageNaturalSize, setImageNaturalSize] = useState({ width: 0, height: 0 })
 	const [error, setError] = useState('')
 	const [autoSlug, setAutoSlug] = useState(!isEditing)
+	const imageDrag = useRef(null)
+	const cropFrameRef = useRef(null)
+	const cropImageRef = useRef(null)
+
+	useEffect(() => {
+		const frame = cropFrameRef.current
+		if (!frame) return undefined
+
+		const updateFrameSize = () => {
+			const bounds = frame.getBoundingClientRect()
+			setCropFrameSize((current) => (
+				current.width === bounds.width && current.height === bounds.height
+					? current
+					: { width: bounds.width, height: bounds.height }
+			))
+		}
+
+		updateFrameSize()
+		const observer = new ResizeObserver(updateFrameSize)
+		observer.observe(frame)
+		return () => observer.disconnect()
+	}, [loading])
 
 	useEffect(() => {
 		if (!id) return undefined
@@ -57,6 +86,9 @@ function ProductForm() {
 					stock: String(product.stock ?? ''),
 					badge: product.badge ?? '',
 					imageUrl: product.imageUrl ?? '',
+					imageScale: product.imageScale ?? 100,
+					imagePositionX: product.imagePositionX ?? 50,
+					imagePositionY: product.imagePositionY ?? 50,
 					isActive: product.isActive !== false,
 				})
 				setPreviewUrl(product.imageUrl ?? '')
@@ -89,6 +121,146 @@ function ProductForm() {
 			return
 		}
 		setForm((current) => ({ ...current, [name]: type === 'checkbox' ? checked : value }))
+	}
+
+	function getCropMetrics(scaleValue = form.imageScale) {
+		const { width: frameWidth, height: frameHeight } = cropFrameSize
+		const { width: sourceWidth, height: sourceHeight } = imageNaturalSize
+		if (!frameWidth || !frameHeight || !sourceWidth || !sourceHeight) return null
+
+		const coverScale = Math.max(frameWidth / sourceWidth, frameHeight / sourceHeight)
+		const renderedWidth = sourceWidth * coverScale
+		const renderedHeight = sourceHeight * coverScale
+		const zoom = Number(scaleValue) / 100
+		return {
+			renderedWidth,
+			renderedHeight,
+			maxPanX: zoom > 1 ? Math.max(0, (renderedWidth * zoom - frameWidth) / 2) : 0,
+			maxPanY: zoom > 1 ? Math.max(0, (renderedHeight * zoom - frameHeight) / 2) : 0,
+			zoom,
+		}
+	}
+
+	function imageCanPan() {
+		const metrics = getCropMetrics()
+		return Boolean(metrics && (metrics.maxPanX > 0 || metrics.maxPanY > 0))
+	}
+
+	function imageCanAdjust() {
+		return Boolean(previewUrl) && Number(form.imageScale) > 100
+	}
+
+	function getCropImageStyle() {
+		const metrics = getCropMetrics()
+		if (!metrics) return getProductImageStyle(form)
+
+		const panX = metrics.maxPanX * ((Number(form.imagePositionX) - 50) / 50)
+		const panY = metrics.maxPanY * ((Number(form.imagePositionY) - 50) / 50)
+		return {
+			width: `${metrics.renderedWidth}px`,
+			height: `${metrics.renderedHeight}px`,
+			'--admin-image-pan-x': `${panX}px`,
+			'--admin-image-pan-y': `${panY}px`,
+			'--admin-image-scale': String(metrics.zoom),
+		}
+	}
+
+	function handleCropImageLoad(event) {
+		const frameBounds = cropFrameRef.current?.getBoundingClientRect()
+		if (frameBounds) {
+			setCropFrameSize({ width: frameBounds.width, height: frameBounds.height })
+		}
+		setImageNaturalSize({
+			width: event.currentTarget.naturalWidth,
+			height: event.currentTarget.naturalHeight,
+		})
+	}
+
+	function startImageDrag(event) {
+		if (!previewUrl || uploading || saving || (event.pointerType === 'mouse' && event.button !== 0)) return
+		event.preventDefault()
+		const metrics = getCropMetrics()
+		if (!metrics || (metrics.maxPanX === 0 && metrics.maxPanY === 0)) return
+		const startPanX = metrics.maxPanX * ((Number(form.imagePositionX) - 50) / 50)
+		const startPanY = metrics.maxPanY * ((Number(form.imagePositionY) - 50) / 50)
+		imageDrag.current = {
+			pointerId: event.pointerId,
+			startX: event.clientX,
+			startY: event.clientY,
+			startPanX,
+			startPanY,
+			maxPanX: metrics.maxPanX,
+			maxPanY: metrics.maxPanY,
+		}
+		event.currentTarget.setPointerCapture(event.pointerId)
+		setIsDraggingImage(true)
+	}
+
+	function moveImage(event) {
+		const drag = imageDrag.current
+		if (!drag || drag.pointerId !== event.pointerId) return
+		event.preventDefault()
+		const positionFromPan = (startPan, delta, maxPan) => {
+			if (maxPan <= 0) return 50
+			const pan = Math.max(-maxPan, Math.min(maxPan, startPan + delta))
+			return Math.round(50 + (pan / maxPan) * 50)
+		}
+		setForm((current) => ({
+			...current,
+			imagePositionX: positionFromPan(drag.startPanX, event.clientX - drag.startX, drag.maxPanX),
+			imagePositionY: positionFromPan(drag.startPanY, event.clientY - drag.startY, drag.maxPanY),
+		}))
+	}
+
+	function stopImageDrag(event) {
+		if (imageDrag.current?.pointerId !== event.pointerId) return
+		imageDrag.current = null
+		setIsDraggingImage(false)
+		if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+			event.currentTarget.releasePointerCapture(event.pointerId)
+		}
+	}
+
+	function zoomWithWheel(event) {
+		if (!previewUrl) return
+		event.preventDefault()
+		const direction = event.deltaY < 0 ? 1 : -1
+		setForm((current) => ({
+			...current,
+			imageScale: Math.min(250, Math.max(100, Number(current.imageScale) + direction * 5)),
+		}))
+	}
+
+	function updateImagePosition(axis, value) {
+		setForm((current) => ({
+			...current,
+			[axis === 'x' ? 'imagePositionX' : 'imagePositionY']: Number(value),
+		}))
+	}
+
+	function adjustZoom(amount) {
+		setForm((current) => ({
+			...current,
+			imageScale: Math.min(250, Math.max(100, Number(current.imageScale) + amount)),
+		}))
+	}
+
+	function nudgeImage(event) {
+		if (Number(form.imageScale) <= 100) return
+		const movement = event.shiftKey ? 5 : 1
+		const direction = {
+			ArrowLeft: [-movement, 0],
+			ArrowRight: [movement, 0],
+			ArrowUp: [0, -movement],
+			ArrowDown: [0, movement],
+		}[event.key]
+		if (!direction) return
+		event.preventDefault()
+		setForm((current) => ({
+			...current,
+			imagePositionX: Math.min(100, Math.max(0, Number(current.imagePositionX) + direction[0])),
+			imagePositionY: Math.min(100, Math.max(0, Number(current.imagePositionY) + direction[1])),
+		}))
 	}
 
 	async function handleImageChange(event) {
@@ -156,6 +328,9 @@ function ProductForm() {
 			stock: Number(form.stock),
 			badge: form.badge.trim() || null,
 			imageUrl: form.imageUrl,
+			imageScale: Number(form.imageScale),
+			imagePositionX: Number(form.imagePositionX),
+			imagePositionY: Number(form.imagePositionY),
 			isActive: form.isActive,
 		}
 		try {
@@ -230,8 +405,52 @@ function ProductForm() {
 
 				<aside className="admin-image-uploader">
 					<span className="admin-image-uploader-title">Product image <b>*</b></span>
-					<div className={`admin-image-preview${previewUrl ? ' has-image' : ''}`}>
-						{previewUrl ? <img src={previewUrl} alt="Product preview" /> : <div><span aria-hidden="true">◇</span><p>Image preview</p></div>}
+					<div
+						ref={cropFrameRef}
+						className={`admin-image-preview${previewUrl ? ' has-image' : ''}${imageCanAdjust() ? ' can-pan' : ''}${isDraggingImage ? ' is-dragging' : ''}`}
+						onPointerDown={startImageDrag}
+						onPointerMove={moveImage}
+						onPointerUp={stopImageDrag}
+						onPointerCancel={stopImageDrag}
+						onLostPointerCapture={stopImageDrag}
+						onWheel={zoomWithWheel}
+						onKeyDown={nudgeImage}
+						role="group"
+						aria-label={previewUrl ? 'Drag image to reposition it. Use the mouse wheel to zoom.' : undefined}
+						tabIndex={previewUrl ? 0 : undefined}
+					>
+						{previewUrl ? <img ref={cropImageRef} src={previewUrl} alt="Product preview" draggable="false" onLoad={handleCropImageLoad} style={getCropImageStyle()} /> : <div><span aria-hidden="true">◇</span><p>Image preview</p></div>}
+					</div>
+					<div className="admin-image-adjustments" aria-label="Adjust image inside the fixed preview frame">
+						<div className="admin-image-control">
+							<div className="admin-image-control-heading">
+								<span>Zoom</span>
+								<strong>{form.imageScale}%</strong>
+							</div>
+							<div className="admin-image-zoom-control">
+								<button type="button" aria-label="Zoom out" onClick={() => adjustZoom(-5)} disabled={!previewUrl || Number(form.imageScale) <= 100}>−</button>
+								<input aria-label="Zoom level" type="range" min="100" max="250" step="1" value={form.imageScale} onChange={(event) => setForm((current) => ({ ...current, imageScale: Number(event.target.value) }))} disabled={!previewUrl} />
+								<button type="button" aria-label="Zoom in" onClick={() => adjustZoom(5)} disabled={!previewUrl || Number(form.imageScale) >= 250}>＋</button>
+							</div>
+						</div>
+						<div className="admin-image-control">
+							<div className="admin-image-control-heading">
+								<span>Move left / right</span>
+								<strong>{Number(form.imagePositionX) === 50 ? 'Center' : Number(form.imagePositionX) < 50 ? 'Left' : 'Right'}</strong>
+							</div>
+							<input aria-label="Move image left or right" type="range" min="0" max="100" step="1" value={form.imagePositionX} onChange={(event) => updateImagePosition('x', event.target.value)} disabled={!imageCanAdjust()} />
+							<div className="admin-image-range-ends"><span>Left</span><span>Right</span></div>
+						</div>
+						<div className="admin-image-control">
+							<div className="admin-image-control-heading">
+								<span>Move up / down</span>
+								<strong>{Number(form.imagePositionY) === 50 ? 'Center' : Number(form.imagePositionY) < 50 ? 'Up' : 'Down'}</strong>
+							</div>
+							<input aria-label="Move image up or down" type="range" min="0" max="100" step="1" value={form.imagePositionY} onChange={(event) => updateImagePosition('y', event.target.value)} disabled={!imageCanAdjust()} />
+							<div className="admin-image-range-ends"><span>Up</span><span>Down</span></div>
+						</div>
+						<p className="admin-image-pan-hint">Use the sliders for precise framing, or zoom in and drag the image.</p>
+						<button type="button" onClick={() => setForm((current) => ({ ...current, imageScale: 100, imagePositionX: 50, imagePositionY: 50 }))} disabled={!previewUrl}>Reset framing</button>
 					</div>
 					<label className="admin-upload-button">
 						{uploading ? 'Uploading securely…' : previewUrl ? 'Choose a different image' : 'Upload image'}

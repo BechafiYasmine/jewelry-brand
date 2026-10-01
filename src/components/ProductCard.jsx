@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
+import ProductImage from './ProductImage'
 
 function ProductCard({ product, isClone = false }) {
   const [isSaved, setIsSaved] = useState(false)
@@ -14,7 +15,7 @@ function ProductCard({ product, isClone = false }) {
           className="product-image-link"
           tabIndex={isClone ? -1 : undefined}
         >
-          <img src={product.image} alt={product.name} className="product-image" />
+          <ProductImage product={product} className="product-image" />
           <span className="view-product">View piece</span>
         </Link>
 
