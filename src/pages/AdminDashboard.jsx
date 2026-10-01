@@ -73,11 +73,6 @@ export default function AdminDashboard() {
     }
   }
 
-  function logout() {
-    localStorage.removeItem('adminToken')
-    navigate('/admin/login', { replace: true })
-  }
-
   const pendingCount = orders.filter((order) => order.status === 'PENDING').length
   const totalRevenue = useMemo(
     () => orders.filter((order) => order.status !== 'CANCELLED').reduce((sum, order) => sum + order.total, 0),
@@ -86,18 +81,17 @@ export default function AdminDashboard() {
 
   return (
     <main className="admin-dashboard">
-      <header className="admin-dashboard-header">
-        <a href="/" className="admin-dashboard-brand">LUNÉA <span>ATELIER</span></a>
-        <div className="admin-dashboard-actions">
-          <button type="button" onClick={loadOrders} disabled={loading}>Refresh orders</button>
-          <button type="button" onClick={logout}>Sign out</button>
-        </div>
-      </header>
-
       <section className="admin-dashboard-content">
         <p className="admin-dashboard-eyebrow">STORE MANAGEMENT</p>
-        <h1>Orders</h1>
-        <p>Manage customer purchases and delivery progress.</p>
+        <div className="admin-section-toolbar">
+          <div>
+            <h2>Orders</h2>
+            <p>Manage customer purchases and delivery progress.</p>
+          </div>
+          <button type="button" className="admin-action-button" onClick={loadOrders} disabled={loading}>
+            {loading ? 'Refreshing…' : 'Refresh orders'}
+          </button>
+        </div>
         {error && <p className="admin-dashboard-error" role="alert">{error}</p>}
 
         <div className="admin-dashboard-stats">
