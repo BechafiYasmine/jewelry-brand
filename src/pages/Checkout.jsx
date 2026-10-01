@@ -1,7 +1,8 @@
 import { useState } from 'react'
-import { Link, Navigate, useNavigate } from 'react-router-dom'
+import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom'
 import { useCart } from '../context/CartContext'
 
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000'
 const ORDER_STORAGE_KEY = 'lunea-last-order'
 
 function Checkout() {
@@ -10,6 +11,7 @@ function Checkout() {
   const delivery = cartTotal >= 6500 ? 0 : 500
   const [formError, setFormError] = useState('')
   const [orderPlaced, setOrderPlaced] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false)
   const [form, setForm] = useState({
     fullName: '',
     phone: '',
@@ -28,29 +30,60 @@ function Checkout() {
     setForm((currentForm) => ({ ...currentForm, [name]: value }))
   }
 
-  const placeOrder = (event) => {
+  const placeOrder = async (event) => {
     event.preventDefault()
-    const order = {
-      ...form,
-      id: `LN-${Date.now().toString().slice(-6)}`,
-      items: cart,
-      subtotal: cartTotal,
-      delivery,
-      total: cartTotal + delivery,
-      paymentMethod: 'Cash on Delivery',
-      createdAt: new Date().toISOString(),
-    }
+    setFormError('')
+    setIsSubmitting(true)
 
     try {
-      window.localStorage.setItem(ORDER_STORAGE_KEY, JSON.stringify(order))
-    } catch {
-      setFormError('We could not save your order in this browser. Please try again.')
-      return
-    }
+      const response = await fetch(`${API_URL}/api/orders`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          customerName: form.fullName,
+          phone: form.phone,
+          deliveryMethod: form.deliveryMethod,
+          wilaya: form.wilaya,
+          commune: form.commune,
+          notes: form.notes,
+          items: cart.map((item) => ({
+            productId: Number(item.id),
+            quantity: Number(item.quantity),
+          })),
+        }),
+      })
 
-    setOrderPlaced(true)
-    clearCart()
-    navigate('/order-confirmation')
+      const data = await response.json().catch(() => ({}))
+      if (!response.ok) {
+        throw new Error(data.message || 'Unable to place your order.')
+      }
+
+      const savedOrder = data.order
+      const confirmationOrder = {
+        ...form,
+        id: savedOrder.orderNumber,
+        items: cart,
+        subtotal: savedOrder.subtotal,
+        delivery: savedOrder.deliveryFee,
+        total: savedOrder.total,
+        paymentMethod: 'Cash on Delivery',
+        createdAt: savedOrder.createdAt,
+      }
+
+      try {
+        window.localStorage.setItem(ORDER_STORAGE_KEY, JSON.stringify(confirmationOrder))
+      } catch {
+        // The order is safely stored in the database; confirmation can still be shown.
+      }
+
+      setOrderPlaced(true)
+      clearCart()
+      navigate('/order-confirmation', { state: { order: confirmationOrder } })
+    } catch (error) {
+      setFormError(error.message || 'Unable to place your order. Please try again.')
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   return (
@@ -170,8 +203,10 @@ function Checkout() {
           <div className="checkout-price-row"><span>Subtotal</span><strong>{cartTotal.toLocaleString()} DZD</strong></div>
           <div className="checkout-price-row"><span>Delivery</span><strong>{delivery ? `${delivery.toLocaleString()} DZD` : 'FREE'}</strong></div>
           <div className="checkout-total-row"><span>Total</span><strong>{(cartTotal + delivery).toLocaleString()} DZD</strong></div>
-          <button className="checkout-submit" type="submit">Place order · Cash on Delivery</button>
-          <p className="checkout-privacy">Your order details are saved locally in this browser for this demo.</p>
+          <button className="checkout-submit" type="submit" disabled={isSubmitting}>
+            {isSubmitting ? 'Submitting order…' : 'Place order · Cash on Delivery'}
+          </button>
+          <p className="checkout-privacy">Your order details are securely submitted to our store when you place your order.</p>
           <Link className="checkout-back-link" to="/shop">Continue shopping</Link>
         </aside>
       </form>
@@ -180,7 +215,10 @@ function Checkout() {
 }
 
 export function OrderConfirmation() {
+  const location = useLocation()
   const [order] = useState(() => {
+    if (location.state?.order) return location.state.order
+
     try {
       const savedOrder = window.localStorage.getItem(ORDER_STORAGE_KEY)
       return savedOrder ? JSON.parse(savedOrder) : null

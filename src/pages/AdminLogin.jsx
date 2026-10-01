@@ -1,20 +1,20 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import "../styles/admin.css";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
 export default function AdminLogin() {
+  const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const [success, setSuccess] = useState("");
 
   async function handleSubmit(event) {
     event.preventDefault();
 
     setError("");
-    setSuccess("");
     setLoading(true);
 
     try {
@@ -36,7 +36,7 @@ export default function AdminLogin() {
       }
 
       localStorage.setItem("adminToken", data.token);
-      setSuccess("You're signed in. Your admin session is ready.");
+      navigate("/admin", { replace: true });
     } catch (error) {
       setError(error.message || "Unable to sign in. Please try again.");
     } finally {
@@ -104,7 +104,6 @@ export default function AdminLogin() {
             </div>
 
             {error && <p className="admin-login-message admin-login-error" role="alert">{error}</p>}
-            {success && <p className="admin-login-message admin-login-success" role="status">{success}</p>}
 
             <button className="admin-login-submit" type="submit" disabled={loading}>
               <span>{loading ? "Signing in…" : "Sign in to your account"}</span>

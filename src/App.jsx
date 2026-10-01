@@ -11,14 +11,15 @@ import About from './pages/About'
 import Contact from './pages/Contact'
 import Checkout, { OrderConfirmation } from './pages/Checkout'
 import AdminLogin from './pages/AdminLogin'
+import AdminDashboard from './pages/AdminDashboard'
 
 function AppRoutes() {
   const { pathname } = useLocation()
-  const isAdminLogin = pathname === '/admin/login'
+  const isAdminRoute = pathname.startsWith('/admin')
 
   return (
     <>
-      {!isAdminLogin && <Navbar />}
+      {!isAdminRoute && <Navbar />}
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/shop" element={<Shop />} />
@@ -28,10 +29,11 @@ function AppRoutes() {
         <Route path="/checkout" element={<Checkout />} />
         <Route path="/order-confirmation" element={<OrderConfirmation />} />
         <Route path="/admin/login" element={<AdminLogin />} />
+        <Route path="/admin" element={<AdminDashboard />} />
       </Routes>
 
-      {!isAdminLogin && <CartDrawer />}
-      {!isAdminLogin && <Footer />}
+      {!isAdminRoute && <CartDrawer />}
+      {!isAdminRoute && <Footer />}
     </>
   )
 }
