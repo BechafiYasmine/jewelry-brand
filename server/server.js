@@ -4,6 +4,7 @@ import express from "express";
 import cors from "cors";
 import { prisma } from "./lib/prisma.js";
 import productRoutes from "./routes/productRoutes.js";
+import adminRoutes from "./routes/adminRoutes.js";
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -33,6 +34,14 @@ app.use(
 
 app.use(express.json());
 app.use("/api/products", productRoutes);
+app.use("/api/admin", adminRoutes);
+
+app.get("/api/admin/test", (req, res) => {
+  res.json({
+    success: true,
+    message: "Admin routes are mounted",
+  });
+});
 
 app.get("/api/health", (req, res) => {
   res.json({

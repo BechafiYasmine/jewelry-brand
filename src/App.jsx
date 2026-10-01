@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom'
 
 import Navbar from './components/Navbar'
 import CartDrawer from './components/CartDrawer'
@@ -10,12 +10,15 @@ import Product from './pages/Product'
 import About from './pages/About'
 import Contact from './pages/Contact'
 import Checkout, { OrderConfirmation } from './pages/Checkout'
+import AdminLogin from './pages/AdminLogin'
 
-function App() {
+function AppRoutes() {
+  const { pathname } = useLocation()
+  const isAdminLogin = pathname === '/admin/login'
+
   return (
-    <BrowserRouter>
-      <Navbar />
-
+    <>
+      {!isAdminLogin && <Navbar />}
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/shop" element={<Shop />} />
@@ -24,10 +27,19 @@ function App() {
         <Route path="/contact" element={<Contact />} />
         <Route path="/checkout" element={<Checkout />} />
         <Route path="/order-confirmation" element={<OrderConfirmation />} />
+        <Route path="/admin/login" element={<AdminLogin />} />
       </Routes>
 
-      <CartDrawer />
-      <Footer />
+      {!isAdminLogin && <CartDrawer />}
+      {!isAdminLogin && <Footer />}
+    </>
+  )
+}
+
+function App() {
+  return (
+    <BrowserRouter>
+      <AppRoutes />
     </BrowserRouter>
   )
 }
