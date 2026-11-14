@@ -1,3 +1,4 @@
+
 import "dotenv/config";
 import { PrismaClient } from "@prisma/client";
 import { PrismaMariaDb } from "@prisma/adapter-mariadb";
@@ -5,16 +6,21 @@ import { PrismaMariaDb } from "@prisma/adapter-mariadb";
 const databaseUrl = process.env.DATABASE_URL;
 
 if (!databaseUrl) {
-  throw new Error(
-    "DATABASE_URL is not defined. Add it to server/.env before using Prisma."
-  );
+  throw new Error("DATABASE_URL is not defined.");
 }
 
-const adapter = new PrismaMariaDb(databaseUrl, {
+const dbUrl = new URL(databaseUrl);
+
+const adapter = new PrismaMariaDb({
+  host: dbUrl.hostname,
+  port: Number(dbUrl.port || 3306),
+  user: decodeURIComponent(dbUrl.username),
+  password: decodeURIComponent(dbUrl.password),
+  database: dbUrl.pathname.replace(/^\//, ""),
   connectionLimit: 5,
   connectTimeout: 10000,
   acquireTimeout: 10000,
-  useTextProtocol: true,
+  ssl: true,
 });
 
 export const prisma = new PrismaClient({
