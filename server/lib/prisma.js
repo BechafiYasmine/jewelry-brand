@@ -16,17 +16,14 @@ const adapter = new PrismaMariaDb({
   port: Number(dbUrl.port || 3306),
   user: decodeURIComponent(dbUrl.username),
   password: decodeURIComponent(dbUrl.password),
-  database: dbUrl.pathname.replace(/^\//, ""),
+  database: dbUrl.pathname.slice(1),
+  ssl: true,
   connectionLimit: 5,
   connectTimeout: 10000,
   acquireTimeout: 10000,
-  ssl: true,
 });
 
 export const prisma = new PrismaClient({
   adapter,
-  log:
-    process.env.NODE_ENV === "development"
-      ? ["query", "info", "warn", "error"]
-      : ["error"],
+  log: ["error"],
 });
